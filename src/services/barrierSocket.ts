@@ -3,7 +3,6 @@ import type { Server as HttpServer } from 'node:http';
 import { Server as SocketIOServer } from 'socket.io';
 
 type BarrierCommandPayload = {
-    deviceId: string;
     barrierId: string;
     action: 'toggle';
 };
@@ -21,7 +20,9 @@ export function initBarrierSocketServer(httpServer: HttpServer): void {
         console.log(`Socket.IO client connected: ${socket.id}`);
 
         socket.on('disconnect', (reason) => {
-            console.log(`Socket.IO client disconnected: ${socket.id}. Reason: ${reason}`);
+            console.log(
+                `Socket.IO client disconnected: ${socket.id}. Reason: ${reason}`
+            );
         });
     });
 
