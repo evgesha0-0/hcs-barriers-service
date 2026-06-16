@@ -4,6 +4,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 
 import { registerRoutes } from './routes/index.js';
+import { initBarrierSocketServer } from './services/barrierSocket.js';
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ await server.register(swaggerUi, {
 });
 
 await registerRoutes(server);
+
+initBarrierSocketServer(server.server);
 
 const start = async (): Promise<void> => {
     try {

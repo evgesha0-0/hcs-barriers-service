@@ -1,4 +1,6 @@
-import { io } from 'socket.io-client';
+import type { Server as HttpServer } from 'node:http';
+
+import { Server as SocketIOServer } from 'socket.io';
 
 type BarrierCommandPayload = {
     deviceId: string;
@@ -6,32 +8,32 @@ type BarrierCommandPayload = {
     action: 'toggle';
 };
 
-const socketUrl = process.env.BARRIER_COMMAND_SOCKET_URL;
+let io: SocketIOServer | null = null;
 
-if (!socketUrl) {
-    throw new Error('BARRIER_COMMAND_SOCKET_URL is required.');
+export function initBarrierSocketServer(httpServer: HttpServer): void {
+    io = new SocketIOServer(httpServer, {
+        cors: {
+            origin: '*',
+        },
+    });
+
+    io.on('connection', (socket) => {
+        console.log(`Socket.IO client connected: ${socket.id}`);
+
+        socket.on('disconnect', (reason) => {
+            console.log(`Socket.IO client disconnected: ${socket.id}. Reason: ${reason}`);
+        });
+    });
+
+    console.log('Socket.IO server initialized');
 }
 
-const socket = io(socketUrl, {
-    autoConnect: true,
-    reconnection: true,
-    transports: ['websocket'],
-});
-
-socket.on('connect', () => {
-    console.log(`Socket.IO connected: ${socket.id}`);
-});
-
-socket.on('disconnect', (reason) => {
-    console.log(`Socket.IO disconnected: ${reason}`);
-});
-
-socket.on('connect_error', (error) => {
-    console.error('Socket.IO connection error:', error.message);
-});
-
 export function sendBarrierCommand(payload: BarrierCommandPayload): void {
-    console.log('Sending barrier command:', payload);
+    if (!io) {
+        throw new Error('Socket.IO server is not initialized.');
+    }
 
-    socket.emit('barrier-command', payload);
+    console.log('Sending barrier command to connected clients:', payload);
+
+    io.emit('barrier-command', payload);
 }
